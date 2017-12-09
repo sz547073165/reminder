@@ -19,7 +19,7 @@ public class MatchTask {
     public void task1() throws Exception {
         System.out.println(new Date());
         ArrayList<HashMap<String, String>> matchIdList = MatchSelecter.get70minMatchId();
-        System.out.println(String.format("70min match：%s", matchIdList));
+        System.out.println(String.format("70min比赛：%s", matchIdList));
         String text = "";
         for (Map<String, String> temp : matchIdList) {
             ArrayList<Integer> noGoalList = MatchSelecter.getNoGoalCount(temp.get("matchId"));
