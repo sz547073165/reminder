@@ -11,12 +11,12 @@ import javax.mail.MessagingException;
 @EnableScheduling
 public class ReminderApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(ReminderApplication.class, args);
-		try {
-			EmailMisc.sendEmail("match reminder server start", "server start");
-		} catch (MessagingException e) {
-			e.printStackTrace();
-		}
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(ReminderApplication.class, args);
+        try {
+            EmailMisc.sendEmail("match reminder server start", "server start");
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        }
+    }
 }

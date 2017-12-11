@@ -31,7 +31,6 @@ public class ConfigPropertiesTest extends Tester{
     public void getValueTest() throws Exception {
         print(profilesProperties.getPort());
         print(configProperties.getActive());
-        print(configProperties.getName());
     }
 
 }
