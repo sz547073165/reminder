@@ -21,6 +21,9 @@ public class RedisClient {
 
     public <T> T get(String key, Class<T> tClass) {
         String value = get(key);
+        if (value == "" || value == null) {
+            return null;
+        }
         return JSONObject.parseObject(value, tClass);
     }
 

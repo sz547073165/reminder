@@ -90,7 +90,7 @@ public class MatchSelecter {
      * @return
      * @throws Exception
      */
-    public ArrayList<Integer> getNoGoalCount(String matchId) throws Exception {
+    public ArrayList<Integer> getSecondNoGoalCount(String matchId) throws Exception {
         String response = getPanLuResponse(matchId);
         String panLuPatternStr = "var hometeamid.*?var GoalCn";
         Pattern panLuPattern = Pattern.compile(panLuPatternStr);
@@ -120,8 +120,8 @@ public class MatchSelecter {
             map.put("guestGoalH", temp[11]);
             panLuList.add(map);
         }
-        int homeSignal = checkSignal(panLuList, homeId);
-        int guestSignal = checkSignal(panLuList, guestId);
+        int homeSignal = checkSecondSignal(panLuList, homeId);
+        int guestSignal = checkSecondSignal(panLuList, guestId);
         ArrayList<Integer> resultList = new ArrayList<>();
         resultList.add(homeSignal);
         resultList.add(guestSignal);
@@ -135,7 +135,7 @@ public class MatchSelecter {
      * @param teamId
      * @return
      */
-    private int checkSignal(List<Map<String, String>> panLuList, String teamId) {
+    private int checkSecondSignal(List<Map<String, String>> panLuList, String teamId) {
         int signal = 0;
         for (Map<String, String> temp : panLuList) {
             if (teamId.equals(temp.get("homeId")) || teamId.equals(temp.get("guestId"))) {
@@ -159,6 +159,73 @@ public class MatchSelecter {
             }
         }
         return signal;
+    }
+
+    public ArrayList<Double> getFirstGoalCount(String matchId) throws Exception {
+        String response = getPanLuResponse(matchId);
+        String panLuPatternStr = "var hometeamid.*?var GoalCn";
+        Pattern panLuPattern = Pattern.compile(panLuPatternStr);
+        Matcher panLuMatcher = panLuPattern.matcher(response);
+        String targetStr = null;
+        if (!panLuMatcher.find()) {
+            return null;
+        }
+        targetStr = panLuMatcher.group();
+        String[] panLuStrArray = targetStr.split(";");
+        String sClass = panLuStrArray[0].split("'")[1];
+        String homeId = Misc.getStrByPattern("[1-9]\\d*", panLuStrArray[0]).get(0);
+        String guestId = Misc.getStrByPattern("[1-9]\\d*", panLuStrArray[0]).get(1);
+        ArrayList<Map<String, String>> panLuList = new ArrayList<>();
+        for (int i = 1; i < panLuStrArray.length - 1; i++) {
+            String[] temp = panLuStrArray[i].split("\\[")[2].split("\\]")[0].split(",");
+            Map<String, String> map = new HashMap<>();
+            map.put("matchId", temp[0]);
+            map.put("sClass", temp[1]);
+            map.put("homeName", temp[4]);
+            map.put("guestName", temp[5]);
+            map.put("homeId", temp[6]);
+            map.put("guestId", temp[7]);
+            map.put("homeGoal", temp[8]);
+            map.put("guestGoal", temp[9]);
+            map.put("homeGoalH", temp[10]);
+            map.put("guestGoalH", temp[11]);
+            panLuList.add(map);
+        }
+        double homeSignal = checkFirstGoalOrLoseSignal(panLuList, homeId);
+        double guestSignal = checkFirstGoalOrLoseSignal(panLuList, guestId);
+        ArrayList<Double> resultList = new ArrayList<>();
+        resultList.add(homeSignal);
+        resultList.add(guestSignal);
+        return resultList;
+    }
+
+    /**
+     * 统计某个队，上半场进球场数比
+     *
+     * @param panLuList
+     * @param teamId
+     * @return
+     */
+    private double checkFirstGoalOrLoseSignal(List<Map<String, String>> panLuList, String teamId) {
+        if (panLuList.size() == 0) {
+            return 0;
+        }
+        int signal = 0;
+        double result = 0;
+        for (int i = 0; i < 10; i++) {
+            Map<String, String> temp = panLuList.get(i);
+            if (teamId.equals(temp.get("homeId")) || teamId.equals(temp.get("guestId"))) {
+                Integer homeGoalH = Integer.parseInt(temp.get("homeGoalH"));
+                Integer guestGoalH = Integer.parseInt(temp.get("guestGoalH"));
+                if (homeGoalH + guestGoalH > 0) {
+                    signal++;
+                }
+            } else {
+                i--;
+            }
+            result = (double) signal / (i + 1) * 100;
+        }
+        return Double.parseDouble(String.format("%.2f", result));
     }
 
     /**
@@ -235,6 +302,49 @@ public class MatchSelecter {
                 map.put("startTime", startTime.getTime().toString());
                 map.put("matchTeam", match[5] + " VS " + match[8]);
                 matchList.add(map);
+            }
+        }
+        return matchList;
+    }
+
+    /**
+     * 筛选比赛，获取比赛信息<br>
+     * 时间：25min<br>
+     * 比分：0-0<br>
+     * 其他：无红卡<br>
+     *
+     * @return
+     */
+    public ArrayList<HashMap<String, String>> get25minMatch() {
+        ArrayList<String> matchesStrList = redisClient.get("matchesStrList", ArrayList.class);
+        ArrayList<HashMap<String, String>> matchList = new ArrayList<>();
+        for (String temp : matchesStrList) {
+            String[] match = temp.split("\\^");
+            // 获取比赛上半场开始时间
+            Calendar startTime = Calendar.getInstance();
+            startTime.set(Integer.parseInt(match[12].split(",")[0]), Integer.parseInt(match[12].split(",")[1]),
+                    Integer.parseInt(match[12].split(",")[2]), Integer.parseInt(match[11].split(":")[0]),
+                    Integer.parseInt(match[11].split(":")[1]));
+            long startTimeLong = startTime.getTimeInMillis() / 1000;
+            long nowLong = Instant.now().getEpochSecond();
+            // 还未进行的比赛
+            if (nowLong < startTimeLong + 25 * 60 && startTimeLong + (25 + 5) * 60 < nowLong) {
+                // 获取半场比分为0-0的比赛
+                int halfGoalA = Integer.parseInt(match[16].isEmpty() ? "-1" : match[16]);
+                int halfGoalB = Integer.parseInt(match[17].isEmpty() ? "-1" : match[17]);
+                if (halfGoalA == 0 && halfGoalB == 0) {
+                    // 红牌等于0
+                    int redCard1 = Integer.parseInt(match[18]);
+                    int redCard2 = Integer.parseInt(match[19]);
+                    if (redCard1 == 0 && redCard2 == 0) {
+                        HashMap<String, String> map = new HashMap<>();
+                        map.put("matchId", match[0]);
+                        map.put("league", match[2]);
+                        map.put("startTime", startTime.getTime().toString());
+                        map.put("matchTeam", match[5] + " VS " + match[8]);
+                        matchList.add(map);
+                    }
+                }
             }
         }
         return matchList;

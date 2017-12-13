@@ -5,6 +5,9 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MatchSelecterTest extends Tester {
     @Autowired
@@ -32,6 +35,12 @@ public class MatchSelecterTest extends Tester {
 
     @Test
     public void getMatchesByMatchIdFromNet() throws Exception {
+    }
+
+    //@Test
+    public void getFirstGoalCount() throws Exception {
+        List<Map<String, String>> list = matchSelecter.getAllMatches();
+        print(matchSelecter.getFirstGoalCount(list.get(5).get("matchId")));
     }
 
 }
