@@ -212,7 +212,8 @@ public class MatchSelecter {
         }
         int signal = 0;
         double result = 0;
-        for (int i = 0; i < 10; i++) {
+        int count = 0;
+        for (int i = 0; i < panLuList.size(); i++) {
             Map<String, String> temp = panLuList.get(i);
             if (teamId.equals(temp.get("homeId")) || teamId.equals(temp.get("guestId"))) {
                 Integer homeGoalH = Integer.parseInt(temp.get("homeGoalH"));
@@ -220,10 +221,12 @@ public class MatchSelecter {
                 if (homeGoalH + guestGoalH > 0) {
                     signal++;
                 }
-            } else {
-                i--;
+                count++;
             }
-            result = (double) signal / (i + 1) * 100;
+            result = (double) signal / count * 100;
+        }
+        if (count < 10) {
+            return 0;
         }
         return Double.parseDouble(String.format("%.2f", result));
     }
@@ -327,12 +330,12 @@ public class MatchSelecter {
                     Integer.parseInt(match[11].split(":")[1]));
             long startTimeLong = startTime.getTimeInMillis() / 1000;
             long nowLong = Instant.now().getEpochSecond();
-            // 还未进行的比赛
-            if (nowLong < startTimeLong + 25 * 60 && startTimeLong + (25 + 5) * 60 < nowLong) {
+            // 开场25min的比赛
+            if (startTimeLong + 25 * 60 < nowLong && nowLong < startTimeLong + (25 + 5) * 60) {
                 // 获取半场比分为0-0的比赛
-                int halfGoalA = Integer.parseInt(match[16].isEmpty() ? "-1" : match[16]);
-                int halfGoalB = Integer.parseInt(match[17].isEmpty() ? "-1" : match[17]);
-                if (halfGoalA == 0 && halfGoalB == 0) {
+                int nowGoalA = Integer.parseInt(match[14].isEmpty() ? "-2" : match[14]);
+                int nowGoalB = Integer.parseInt(match[15].isEmpty() ? "-2" : match[15]);
+                if (nowGoalA == 0 && nowGoalB == 0) {
                     // 红牌等于0
                     int redCard1 = Integer.parseInt(match[18]);
                     int redCard2 = Integer.parseInt(match[19]);
