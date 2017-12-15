@@ -207,7 +207,8 @@ public class MatchSelecter {
      * @return
      */
     private double checkFirstGoalOrLoseSignal(List<Map<String, String>> panLuList, String teamId) {
-        if (panLuList.size() == 0) {
+        System.out.println(String.format("盘路list的size值：%s",panLuList.size()));
+        if (panLuList.isEmpty()) {
             return 0;
         }
         int signal = 0;
@@ -222,12 +223,13 @@ public class MatchSelecter {
                     signal++;
                 }
                 count++;
+                result = (double) signal / count * 100;
             }
-            result = (double) signal / count * 100;
         }
         if (count < 10) {
             return 0;
         }
+        System.out.println("盘路比值计算结束");
         return Double.parseDouble(String.format("%.2f", result));
     }
 
@@ -343,7 +345,6 @@ public class MatchSelecter {
                         HashMap<String, String> map = new HashMap<>();
                         map.put("matchId", match[0]);
                         map.put("league", match[2]);
-                        map.put("startTime", startTime.getTime().toString());
                         map.put("matchTeam", match[5] + " VS " + match[8]);
                         matchList.add(map);
                     }

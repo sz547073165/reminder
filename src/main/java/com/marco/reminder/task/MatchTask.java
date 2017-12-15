@@ -62,11 +62,12 @@ public class MatchTask {
      * @throws Exception
      */
     @Scheduled(fixedDelay = 1 * 30 * 1000)
-    public void task1() {
+    public void task2() {
         try {
             ArrayList<HashMap<String, String>> matchIdList = matchSelecter.get70minMatch();
             print(String.format("%s 70min match：%s", new Date(), matchIdList));
-            String head = "<p>70min，大0.5</p>";
+            String key = "task2EmailText";
+            String head = "<p><h2>70min，大0.5</h2></p>";
             String text = head;
             for (Map<String, String> temp : matchIdList) {
                 ArrayList<Integer> noGoalList = null;
@@ -79,16 +80,16 @@ public class MatchTask {
                     continue;
                 }
             }
-            EmailText emailText = redisClient.get("task1EmailText", EmailText.class);
+            EmailText emailText = redisClient.get(key, EmailText.class);
             if (emailText == null) {
                 emailText = new EmailText();
-                emailText.setKey("task1EmailText");
+                emailText.setKey(key);
             }
             if (!head.equals(text) && !text.equals(emailText.getText())) {
                 emailText.setStatus(0);
                 emailText.setText(text);
             }
-            redisClient.set("task1EmailText", emailText);
+            redisClient.set(key, emailText);
         } catch (Exception e) {
             return;
         }
@@ -104,7 +105,8 @@ public class MatchTask {
         try {
             ArrayList<HashMap<String, String>> matchIdList = matchSelecter.get25minMatch();
             print(String.format("%s 25min match：%s", new Date(), matchIdList));
-            String head = "<p>25min，大0.5</p>";
+            String key = "task3EmailText";
+            String head = "<p><h2>25min，大0.5</h2></p>";
             String text = head;
             for (Map<String, String> temp : matchIdList) {
                 ArrayList<Double> goalList = null;
@@ -116,16 +118,16 @@ public class MatchTask {
                     continue;
                 }
             }
-            EmailText emailText = redisClient.get("task3EmailText", EmailText.class);
+            EmailText emailText = redisClient.get(key, EmailText.class);
             if (emailText == null) {
                 emailText = new EmailText();
-                emailText.setKey("task3EmailText");
+                emailText.setKey(key);
             }
             if (!head.equals(text) && !text.equals(emailText.getText())) {
                 emailText.setStatus(0);
                 emailText.setText(text);
             }
-            redisClient.set("task3EmailText", emailText);
+            redisClient.set(key, emailText);
         } catch (Exception e) {
             return;
         }
@@ -137,11 +139,12 @@ public class MatchTask {
      * @throws Exception
      */
     @Scheduled(fixedDelay = 3 * 60 * 60 * 1000)
-    public void task2() {
+    public void task1() {
         try {
             print(String.format("%s 00min match", new Date()));
             ArrayList<HashMap<String, String>> matchIdList = matchSelecter.get00minMatch();
-            String head = "<p>未来三小时内，可能的70min赛事</p>";
+            String key = "task1EmailText";
+            String head = "<p><h2>未来三小时内，可能的25min或70min赛事</h2></p>";
             String text = head;
             for (Map<String, String> temp : matchIdList) {
                 ArrayList<Integer> noGoalList = null;
@@ -152,16 +155,25 @@ public class MatchTask {
                     continue;
                 }
             }
-            EmailText emailText = redisClient.get("task2EmailText", EmailText.class);
+            for (Map<String, String> temp : matchIdList) {
+                ArrayList<Double> goalList = null;
+                goalList = matchSelecter.getFirstGoalCount(temp.get("matchId"));
+                if (goalList != null && (goalList.get(0) > 55 || goalList.get(1) > 55)) {
+                    text = String.format("%s<p>%s</p><p>%s</p><p></p>", text, JSONObject.toJSONString(temp), JSONObject.toJSONString(goalList));
+                } else {
+                    continue;
+                }
+            }
+            EmailText emailText = redisClient.get(key, EmailText.class);
             if (emailText == null) {
                 emailText = new EmailText();
-                emailText.setKey("task2EmailText");
+                emailText.setKey(key);
             }
             if (!head.equals(text) && !text.equals(emailText.getText())) {
                 emailText.setStatus(0);
                 emailText.setText(text);
             }
-            redisClient.set("task2EmailText", emailText);
+            redisClient.set(key, emailText);
         } catch (Exception e) {
             return;
         }
