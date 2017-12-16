@@ -207,7 +207,7 @@ public class MatchSelecter {
      * @return
      */
     private double checkFirstGoalOrLoseSignal(List<Map<String, String>> panLuList, String teamId) {
-        System.out.println(String.format("盘路list的size值：%s",panLuList.size()));
+        System.out.println(String.format("盘路list的size值：%s", panLuList.size()));
         if (panLuList.isEmpty()) {
             return 0;
         }
@@ -304,7 +304,7 @@ public class MatchSelecter {
                 HashMap<String, String> map = new HashMap<>();
                 map.put("matchId", match[0]);
                 map.put("league", match[2]);
-                map.put("startTime", startTime.getTime().toString());
+                map.put("startTime", Misc.dateLong2String(startTime.getTimeInMillis(), "HH:mm"));
                 map.put("matchTeam", match[5] + " VS " + match[8]);
                 matchList.add(map);
             }

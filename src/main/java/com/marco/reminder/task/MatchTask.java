@@ -38,12 +38,8 @@ public class MatchTask {
                 matchesStrListInCache = redisClient.get("matchesStrList");
             }
             ArrayList<String> matchesStrList = null;
-            try {
-                matchesStrList = matchSelecter.getMatchesStrList();
-            } catch (Exception e) {
-                return;
-            }
-            if (matchesStrList == null && matchesStrList.size() <= 0) {
+            matchesStrList = matchSelecter.getMatchesStrList();
+            if (matchesStrList == null && matchesStrList.isEmpty()) {
                 return;
             }
             String temp = JSONObject.toJSONString(matchesStrList);
@@ -52,83 +48,7 @@ public class MatchTask {
             }
             redisClient.set("matchesStrList", temp);
         } catch (Exception e) {
-            return;
-        }
-    }
-
-    /**
-     * 比赛：70min，大0.5
-     *
-     * @throws Exception
-     */
-    @Scheduled(fixedDelay = 1 * 30 * 1000)
-    public void task2() {
-        try {
-            ArrayList<HashMap<String, String>> matchIdList = matchSelecter.get70minMatch();
-            print(String.format("%s 70min match：%s", new Date(), matchIdList));
-            String key = "task2EmailText";
-            String head = "<p><h2>70min，大0.5</h2></p>";
-            String text = head;
-            for (Map<String, String> temp : matchIdList) {
-                ArrayList<Integer> noGoalList = null;
-                noGoalList = matchSelecter.getSecondNoGoalCount(temp.get("matchId"));
-                print(noGoalList);
-                if (noGoalList != null && (noGoalList.get(0) + noGoalList.get(1) >= 3)) {
-                    //                if (noGoalList != null && (noGoalList.get(0) >= 2 || noGoalList.get(1) >= 2)) {
-                    text = String.format("%s<p>%s</p><p>%s</p><p></p>", text, JSONObject.toJSONString(temp), JSONObject.toJSONString(noGoalList));
-                } else {
-                    continue;
-                }
-            }
-            EmailText emailText = redisClient.get(key, EmailText.class);
-            if (emailText == null) {
-                emailText = new EmailText();
-                emailText.setKey(key);
-            }
-            if (!head.equals(text) && !text.equals(emailText.getText())) {
-                emailText.setStatus(0);
-                emailText.setText(text);
-            }
-            redisClient.set(key, emailText);
-        } catch (Exception e) {
-            return;
-        }
-    }
-
-    /**
-     * 比赛：25min，大0.5
-     *
-     * @throws Exception
-     */
-    @Scheduled(fixedDelay = 1 * 30 * 1000)
-    public void task3() {
-        try {
-            ArrayList<HashMap<String, String>> matchIdList = matchSelecter.get25minMatch();
-            print(String.format("%s 25min match：%s", new Date(), matchIdList));
-            String key = "task3EmailText";
-            String head = "<p><h2>25min，大0.5</h2></p>";
-            String text = head;
-            for (Map<String, String> temp : matchIdList) {
-                ArrayList<Double> goalList = null;
-                goalList = matchSelecter.getFirstGoalCount(temp.get("matchId"));
-                print(goalList);
-                if (goalList != null && (goalList.get(0) > 55 || goalList.get(1) > 55)) {
-                    text = String.format("%s<p>%s</p><p>%s</p><p></p>", text, JSONObject.toJSONString(temp), JSONObject.toJSONString(goalList));
-                } else {
-                    continue;
-                }
-            }
-            EmailText emailText = redisClient.get(key, EmailText.class);
-            if (emailText == null) {
-                emailText = new EmailText();
-                emailText.setKey(key);
-            }
-            if (!head.equals(text) && !text.equals(emailText.getText())) {
-                emailText.setStatus(0);
-                emailText.setText(text);
-            }
-            redisClient.set(key, emailText);
-        } catch (Exception e) {
+            print(e.getMessage());
             return;
         }
     }
@@ -166,8 +86,50 @@ public class MatchTask {
             }
             EmailText emailText = redisClient.get(key, EmailText.class);
             if (emailText == null) {
-                emailText = new EmailText();
-                emailText.setKey(key);
+                emailText = new EmailText(key,text);
+            }
+            if (!head.equals(text) && !text.equals(emailText.getText())) {
+                emailText.setStatus(0);
+                emailText.setText(text);
+
+            }
+            redisClient.set(key, emailText);
+        } catch (Exception e) {
+            print(e.getMessage());
+            return;
+        }
+    }
+
+    /**
+     * 比赛：70min，大0.5
+     *
+     * @throws Exception
+     */
+    @Scheduled(fixedDelay = 1 * 30 * 1000)
+    public void task2() {
+        try {
+            ArrayList<HashMap<String, String>> matchIdList = matchSelecter.get70minMatch();
+            print(String.format("%s 70min match：%s", new Date(), matchIdList));
+            if (matchIdList.isEmpty()) {
+                // return;
+            }
+            String key = "task2EmailText";
+            String head = "<p><h2>70min，大0.5</h2></p>";
+            String text = head;
+            for (Map<String, String> temp : matchIdList) {
+                ArrayList<Integer> noGoalList = null;
+                noGoalList = matchSelecter.getSecondNoGoalCount(temp.get("matchId"));
+                print(noGoalList);
+                if (noGoalList != null && (noGoalList.get(0) + noGoalList.get(1) >= 3)) {
+                    //                if (noGoalList != null && (noGoalList.get(0) >= 2 || noGoalList.get(1) >= 2)) {
+                    text = String.format("%s<p>%s</p><p>%s</p><p></p>", text, JSONObject.toJSONString(temp), JSONObject.toJSONString(noGoalList));
+                } else {
+                    continue;
+                }
+            }
+            EmailText emailText = redisClient.get(key, EmailText.class);
+            if (emailText == null) {
+                emailText = new EmailText(key,text);
             }
             if (!head.equals(text) && !text.equals(emailText.getText())) {
                 emailText.setStatus(0);
@@ -175,6 +137,46 @@ public class MatchTask {
             }
             redisClient.set(key, emailText);
         } catch (Exception e) {
+            print(e.getMessage());
+            return;
+        }
+    }
+
+    /**
+     * 比赛：25min，大0.5
+     *
+     * @throws Exception
+     */
+    @Scheduled(fixedDelay = 1 * 30 * 1000)
+    public void task3() {
+        try {
+            ArrayList<HashMap<String, String>> matchIdList = matchSelecter.get25minMatch();
+            print(String.format("%s 25min match：%s", new Date(), matchIdList));
+            String key = "task3EmailText";
+            String head = "<p><h2>25min，大0.5</h2></p>";
+            String text = head;
+            for (Map<String, String> temp : matchIdList) {
+                ArrayList<Double> goalList = null;
+                goalList = matchSelecter.getFirstGoalCount(temp.get("matchId"));
+                print(goalList);
+                if (goalList != null && (goalList.get(0) > 55 || goalList.get(1) > 55)) {
+                    text = String.format("%s<p>%s</p><p>%s</p><p></p>", text, JSONObject.toJSONString(temp), JSONObject.toJSONString(goalList));
+                } else {
+                    continue;
+                }
+            }
+            EmailText emailText = redisClient.get(key, EmailText.class);
+            if (emailText == null) {
+                emailText = new EmailText(key,head);
+            }
+            if (!head.equals(text) && !text.equals(emailText.getText())) {
+                emailText.setStatus(0);
+                emailText.setText(text);
+
+            }
+            redisClient.set(key, emailText);
+        } catch (Exception e) {
+            print(e.getMessage());
             return;
         }
     }
@@ -226,6 +228,7 @@ public class MatchTask {
                 redisClient.set(emailText.getKey(), emailText);
             }
         } catch (Exception e) {
+            print(e.getMessage());
             return;
         }
     }

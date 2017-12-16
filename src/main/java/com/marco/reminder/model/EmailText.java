@@ -19,8 +19,14 @@ public class EmailText {
      */
     private Integer status;
 
-    public EmailText() {
-        this.setStatus(0);
+    private EmailText() {
+
+    }
+
+    public EmailText(String key, String text) {
+        this.setKey(key);
+        this.setText(text);
+        this.setStatus(1);
     }
 
     public String getKey() {
