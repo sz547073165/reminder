@@ -33,6 +33,8 @@ public class MatchTask {
     @Scheduled(fixedDelay = 10 * 1000)
     public void updateMatchesStrList() {
         try {
+            print(String.format("线程名：%s", JSONObject.toJSONString(Thread.currentThread().getName())));
+            print(String.format("方法名：%s", Thread.currentThread().getStackTrace()[1].getMethodName()));
             String matchesStrListInCache = null;
             if (redisClient.hasKey("matchesStrList")) {
                 matchesStrListInCache = redisClient.get("matchesStrList");
@@ -49,6 +51,7 @@ public class MatchTask {
             redisClient.set("matchesStrList", temp);
         } catch (Exception e) {
             print(e.getMessage());
+            print(e.fillInStackTrace());
             return;
         }
     }
@@ -58,10 +61,11 @@ public class MatchTask {
      *
      * @throws Exception
      */
-    @Scheduled(fixedDelay = 3 * 60 * 60 * 1000)
-    public void task1() {
+//    @Scheduled(fixedDelay = 3 * 60 * 60 * 1000 - 30 * 60 * 1000)
+    public void gamesIn3Hours() {
         try {
-            print(String.format("%s 00min match", new Date()));
+            print(String.format("线程名：%s", JSONObject.toJSONString(Thread.currentThread().getName())));
+            print(String.format("方法名：%s", Thread.currentThread().getStackTrace()[1].getMethodName()));
             ArrayList<HashMap<String, String>> matchIdList = matchSelecter.get00minMatch();
             String key = "task1EmailText";
             String head = "<p><h2>未来三小时内，可能的25min或70min赛事</h2></p>";
@@ -86,7 +90,7 @@ public class MatchTask {
             }
             EmailText emailText = redisClient.get(key, EmailText.class);
             if (emailText == null) {
-                emailText = new EmailText(key,text);
+                emailText = new EmailText(key, text);
             }
             if (!head.equals(text) && !text.equals(emailText.getText())) {
                 emailText.setStatus(0);
@@ -96,6 +100,7 @@ public class MatchTask {
             redisClient.set(key, emailText);
         } catch (Exception e) {
             print(e.getMessage());
+            print(e.fillInStackTrace());
             return;
         }
     }
@@ -105,9 +110,11 @@ public class MatchTask {
      *
      * @throws Exception
      */
-    @Scheduled(fixedDelay = 1 * 30 * 1000)
-    public void task2() {
+//    @Scheduled(fixedDelay = 1 * 30 * 1000)
+    public void matchFor70min() {
         try {
+            print(String.format("线程名：%s", JSONObject.toJSONString(Thread.currentThread().getName())));
+            print(String.format("方法名：%s", Thread.currentThread().getStackTrace()[1].getMethodName()));
             ArrayList<HashMap<String, String>> matchIdList = matchSelecter.get70minMatch();
             print(String.format("%s 70min match：%s", new Date(), matchIdList));
             if (matchIdList.isEmpty()) {
@@ -129,7 +136,7 @@ public class MatchTask {
             }
             EmailText emailText = redisClient.get(key, EmailText.class);
             if (emailText == null) {
-                emailText = new EmailText(key,text);
+                emailText = new EmailText(key, text);
             }
             if (!head.equals(text) && !text.equals(emailText.getText())) {
                 emailText.setStatus(0);
@@ -138,6 +145,7 @@ public class MatchTask {
             redisClient.set(key, emailText);
         } catch (Exception e) {
             print(e.getMessage());
+            print(e.fillInStackTrace());
             return;
         }
     }
@@ -148,8 +156,10 @@ public class MatchTask {
      * @throws Exception
      */
     @Scheduled(fixedDelay = 1 * 30 * 1000)
-    public void task3() {
+    public void matchFor25min() {
         try {
+            print(String.format("线程名：%s", JSONObject.toJSONString(Thread.currentThread().getName())));
+            print(String.format("方法名：%s", Thread.currentThread().getStackTrace()[1].getMethodName()));
             ArrayList<HashMap<String, String>> matchIdList = matchSelecter.get25minMatch();
             print(String.format("%s 25min match：%s", new Date(), matchIdList));
             String key = "task3EmailText";
@@ -167,7 +177,7 @@ public class MatchTask {
             }
             EmailText emailText = redisClient.get(key, EmailText.class);
             if (emailText == null) {
-                emailText = new EmailText(key,head);
+                emailText = new EmailText(key, head);
             }
             if (!head.equals(text) && !text.equals(emailText.getText())) {
                 emailText.setStatus(0);
@@ -177,12 +187,18 @@ public class MatchTask {
             redisClient.set(key, emailText);
         } catch (Exception e) {
             print(e.getMessage());
+            print(e.fillInStackTrace());
             return;
         }
     }
 
     private void print(Object object) {
         System.out.println(object);
+    }
+
+    private void printName() {
+        print(String.format("线程名：%s", JSONObject.toJSONString(Thread.currentThread().getName())));
+        print(String.format("方法名：%s", Thread.currentThread().getStackTrace()[1].getMethodName()));
     }
 
     private void sendEmail(final String subject, final String text) {
@@ -201,6 +217,8 @@ public class MatchTask {
     @Scheduled(fixedDelay = 1 * 60 * 1000)
     public void sendEmailTask() {
         try {
+            print(String.format("线程名：%s", JSONObject.toJSONString(Thread.currentThread().getName())));
+            print(String.format("方法名：%s", Thread.currentThread().getStackTrace()[1].getMethodName()));
             ArrayList<String> emailTextNameList = new ArrayList<>();
             emailTextNameList.add("task1EmailText");
             emailTextNameList.add("task2EmailText");
@@ -229,6 +247,7 @@ public class MatchTask {
             }
         } catch (Exception e) {
             print(e.getMessage());
+            print(e.fillInStackTrace());
             return;
         }
     }
